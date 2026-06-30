@@ -33,8 +33,23 @@ const AI_PROMPTS = {
 };
 
 async function generateWithGemini(prompt, maxWords) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-pro' });
-  const result = await model.generateContent(`${prompt}\n\nKeep response under ${maxWords} words.`);
+  const model = gemini.getGenerativeModel({
+    model: "gemini-2.0-flash"
+  });
+
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `${prompt}\n\nKeep the response under ${maxWords} words.`
+          }
+        ]
+      }
+    ]
+  });
+
   return result.response.text();
 }
 
