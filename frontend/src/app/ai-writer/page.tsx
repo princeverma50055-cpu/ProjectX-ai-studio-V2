@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { Copy, Download } from 'lucide-react'
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -60,7 +61,6 @@ function AIWriterContent() {
 
       let contentType = res.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
-        // Backend cold-starting on Render free tier, wait & retry once
         await new Promise(resolve => setTimeout(resolve, 5000))
         res = await fetch(`${API_URL}/api/ai/generate`, {
           method: 'POST',
@@ -89,6 +89,24 @@ function AIWriterContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function copyOutput() {
+    if (!output) return
+    navigator.clipboard.writeText(output)
+    toast.success('Copied to clipboard!')
+  }
+
+  function downloadOutput() {
+    if (!output) return
+    const blob = new Blob([output], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${selectedTool.id}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Downloaded!')
   }
 
   return (
@@ -128,8 +146,20 @@ function AIWriterContent() {
               </button>
             </div>
 
-            <div className="glass p-4 rounded-xl min-h-[200px] text-white/80 whitespace-pre-wrap">
-              {loading ? <p>Generating...</p> : output ? <div className="prose prose-invert max-w-none">{output}</div> : <p>No output yet</p>}
+            <div className="glass p-4 rounded-xl min-h-[200px] text-white/80">
+              {output && !loading && (
+                <div className="flex justify-end gap-2 mb-3">
+                  <button onClick={copyOutput} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-cyan-400 transition-colors">
+                    <Copy className="w-3.5 h-3.5" /> Copy
+                  </button>
+                  <button onClick={downloadOutput} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-emerald-400 transition-colors">
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </button>
+                </div>
+              )}
+              <div className="whitespace-pre-wrap">
+                {loading ? <p>Generating...</p> : output ? <div className="prose prose-invert max-w-none">{output}</div> : <p>No output yet</p>}
+              </div>
             </div>
           </div>
         </div>
