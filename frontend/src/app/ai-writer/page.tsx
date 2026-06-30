@@ -45,8 +45,8 @@ function AIWriterContent() {
     setOutput('')
 
     try {
-      // Relative path ka use kiya hai taaki CORS error na aaye
-      const res = await fetch('/api/ai/generate', {
+      // FIX: Yahan pura URL use karein taaki request backend server par jaye
+      const res = await fetch('https://project-x-ai-studio-v2.vercel.app/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
