@@ -1,9 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Zap, Copy, Download, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Link from 'next/link'
 
 const tools = [
   { id: 'blog_writer', label: '📝 Blog Writer', placeholder: 'Enter blog topic...' },
@@ -32,7 +30,6 @@ function AIWriterContent() {
   const [loading, setLoading] = useState(false)
   const [remaining, setRemaining] = useState<number | null>(null)
 
-  // ✅ SAFE API HANDLING
   const API = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
@@ -46,7 +43,6 @@ function AIWriterContent() {
       toast.error('Please enter prompt')
       return
     }
-
     if (!API) {
       toast.error('API not configured')
       return
@@ -66,14 +62,19 @@ function AIWriterContent() {
       })
 
       const data = await res.json()
+      
+      // Console mein check karein ki data kya aa raha hai
+      console.log("Backend Response:", data)
 
       if (!res.ok) {
         throw new Error(data?.message || 'Request failed')
       }
 
-      setOutput(data.result || '')
+      // Backend se kisi bhi key mein data aaye, ye usse pick kar lega
+      const finalOutput = data.result || data.text || data.message || data.content || JSON.stringify(data)
+      
+      setOutput(finalOutput)
       setRemaining(data.remainingGenerations ?? null)
-
       toast.success('Generated successfully!')
     } catch (err: any) {
       console.error(err)
@@ -85,71 +86,56 @@ function AIWriterContent() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-
       <div className="max-w-7xl mx-auto px-4">
-
-        {/* TITLE */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">AI Writer</h1>
           <p className="text-white/40 text-sm mt-2">
-            {remaining !== null
-              ? `${remaining} generations left`
-              : 'Free AI Writing Tool'}
+            {remaining !== null ? `${remaining} generations left` : 'Free AI Writing Tool'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* TOOL LIST */}
           <div className="glass p-4 rounded-xl">
             {tools.map(tool => (
               <button
                 key={tool.id}
-                onClick={() => {
-                  setSelectedTool(tool)
-                  setOutput('')
-                }}
-                className={`w-full text-left p-2 rounded ${
-                  selectedTool.id === tool.id
-                    ? 'bg-cyan-500/20 text-white'
-                    : 'text-white/50'
-                }`}
+                onClick={() => { setSelectedTool(tool); setOutput('') }}
+                className={`w-full text-left p-2 rounded ${selectedTool.id === tool.id ? 'bg-cyan-500/20 text-white' : 'text-white/50'}`}
               >
                 {tool.label}
               </button>
             ))}
           </div>
 
-          {/* INPUT + OUTPUT */}
           <div className="lg:col-span-2 space-y-4">
-
-            {/* INPUT */}
             <div className="glass p-4 rounded-xl">
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 placeholder={selectedTool.placeholder}
-                className="w-full h-32 p-3 bg-black/30 text-white rounded"
+                className="w-full h-32 p-3 bg-black/30 text-white rounded border border-white/10"
               />
-
               <button
                 onClick={generate}
                 disabled={loading}
-                className="mt-3 px-4 py-2 bg-cyan-500 text-black rounded"
+                className="mt-3 px-4 py-2 bg-cyan-500 text-black rounded font-bold hover:bg-cyan-400 disabled:opacity-50"
               >
                 {loading ? 'Generating...' : 'Generate'}
               </button>
             </div>
 
-            {/* OUTPUT */}
-            <div className="glass p-4 rounded-xl min-h-[200px] text-white/80">
-              {loading && <p>Generating...</p>}
-              {!loading && output && <pre>{output}</pre>}
-              {!loading && !output && <p>No output yet</p>}
+            <div className="glass p-4 rounded-xl min-h-[200px] text-white/80 whitespace-pre-wrap">
+              {loading ? (
+                <p>Generating...</p>
+              ) : output ? (
+                <div className="prose prose-invert max-w-none">
+                  {output}
+                </div>
+              ) : (
+                <p>No output yet</p>
+              )}
             </div>
-
           </div>
-
         </div>
       </div>
     </div>
