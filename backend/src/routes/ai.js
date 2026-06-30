@@ -1,51 +1,19 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const express = require('express');
+const router = express.Router();
 
-// -------------------- GENERATE CONTENT --------------------
-export const generateContent = async (toolType, input) => {
-  try {
-    const res = await fetch(`${API_URL}/api/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ toolType, input }),
-    });
+// 1. Generate Content Route
+router.post('/generate', async (req, res) => {
+    res.json({ success: true, message: "Generate endpoint working" });
+});
 
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('Generate API Error:', error);
-    return { success: false, error: 'Failed to fetch' };
-  }
-};
+// 2. Chat Route
+router.post('/chat', async (req, res) => {
+    res.json({ success: true, message: "Chat endpoint working" });
+});
 
-// -------------------- AI CHAT --------------------
-export const chatWithAI = async (message) => {
-  try {
-    const res = await fetch(`${API_URL}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message }),
-    });
+// 3. Get Tools Route
+router.get('/tools', (req, res) => {
+    res.json({ success: true, tools: [] });
+});
 
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return { success: false, error: 'Failed to fetch' };
-  }
-};
-
-// -------------------- GET TOOLS --------------------
-export const getTools = async () => {
-  try {
-    const res = await fetch(`${API_URL}/api/tools`);
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('Tools API Error:', error);
-    return { success: false, error: 'Failed to fetch' };
-  }
-};
+module.exports = router;
