@@ -34,7 +34,7 @@ const AI_PROMPTS = {
 
 async function generateWithGemini(prompt, maxWords) {
   const model = gemini.getGenerativeModel({
-    model: "gemini-2.0-flash"
+    model: "gemini-2.5-flash"
   });
 
   const result = await model.generateContent({
