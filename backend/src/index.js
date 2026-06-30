@@ -14,11 +14,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Kyunki index.js src/ mein hai, hum './routes/' use karenge
 const routePaths = [
   { path: '/api/ai', file: './routes/ai' },
   { path: '/api/convert', file: './routes/converter' },
