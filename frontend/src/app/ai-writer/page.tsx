@@ -23,14 +23,11 @@ const tools = [
 
 function AIWriterContent() {
   const searchParams = useSearchParams()
-
   const [selectedTool, setSelectedTool] = useState(tools[0])
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
   const [remaining, setRemaining] = useState<number | null>(null)
-
-  const API = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
     const toolId = searchParams.get('tool')
@@ -43,16 +40,13 @@ function AIWriterContent() {
       toast.error('Please enter prompt')
       return
     }
-    if (!API) {
-      toast.error('API not configured')
-      return
-    }
 
     setLoading(true)
     setOutput('')
 
     try {
-      const res = await fetch(`${API}/api/ai/generate`, {
+      // Relative path ka use kiya hai taaki CORS error na aaye
+      const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -63,14 +57,10 @@ function AIWriterContent() {
 
       const data = await res.json()
       
-      // Console mein check karein ki data kya aa raha hai
-      console.log("Backend Response:", data)
-
       if (!res.ok) {
         throw new Error(data?.message || 'Request failed')
       }
 
-      // Backend se kisi bhi key mein data aaye, ye usse pick kar lega
       const finalOutput = data.result || data.text || data.message || data.content || JSON.stringify(data)
       
       setOutput(finalOutput)
@@ -89,9 +79,6 @@ function AIWriterContent() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">AI Writer</h1>
-          <p className="text-white/40 text-sm mt-2">
-            {remaining !== null ? `${remaining} generations left` : 'Free AI Writing Tool'}
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -125,15 +112,7 @@ function AIWriterContent() {
             </div>
 
             <div className="glass p-4 rounded-xl min-h-[200px] text-white/80 whitespace-pre-wrap">
-              {loading ? (
-                <p>Generating...</p>
-              ) : output ? (
-                <div className="prose prose-invert max-w-none">
-                  {output}
-                </div>
-              ) : (
-                <p>No output yet</p>
-              )}
+              {loading ? <p>Generating...</p> : output ? <div className="prose prose-invert max-w-none">{output}</div> : <p>No output yet</p>}
             </div>
           </div>
         </div>
