@@ -21,17 +21,26 @@ function ExtraToolsContent() {
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
   const [chatHistory, setChatHistory] = useState<{ role: string; text: string }[]>([])
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+  
+  // FIXED: API URL ka safe access
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
+    // Debugging ke liye console mein check karein ki URL sahi aa raha hai ya nahi
+    console.log("Using API URL:", API);
+    
     const toolId = searchParams.get('tool')
     if (toolId) {
       const found = extraTools.find(t => t.id === toolId)
       if (found) setSelectedTool(found)
     }
-  }, [searchParams])
+  }, [searchParams, API])
 
   async function generate() {
+    if (!API) {
+      toast.error('API URL is not configured!');
+      return;
+    }
     if (!input.trim()) return toast.error('Please enter a prompt')
     setLoading(true)
     try {
@@ -64,7 +73,9 @@ function ExtraToolsContent() {
   }
 
   return (
+    // ... (baaki ka UI code same rahega)
     <div className="min-h-screen pt-24 pb-16 grid-pattern">
+      {/* (UI code content yahan same paste karein) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Extra AI Tools</h1>
