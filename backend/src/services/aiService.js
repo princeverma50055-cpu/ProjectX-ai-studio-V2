@@ -32,25 +32,36 @@ const AI_PROMPTS = {
   faq_generator: (i) => `Generate 10 FAQs with detailed answers for: "${i}". Basic to advanced. Include schema markup at end.`
 };
 
-async function generateWithGemini(prompt, maxWords) {
-  const model = gemini.getGenerativeModel({
-    model: "gemini-2.5-flash"
-  });
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
-  const result = await model.generateContent({
-    contents: [
-      {
-        role: "user",
-        parts: [
+async function generateWithGemini(prompt, maxWords) {
+  let lastError = null;
+
+  for (const modelName of GEMINI_MODELS) {
+    try {
+      const model = gemini.getGenerativeModel({ model: modelName });
+
+      const result = await model.generateContent({
+        contents: [
           {
-            text: `${prompt}\n\nKeep the response under ${maxWords} words.`
+            role: "user",
+            parts: [
+              {
+                text: `${prompt}\n\nKeep the response under ${maxWords} words.`
+              }
+            ]
           }
         ]
-      }
-    ]
-  });
+      });
 
-  return result.response.text();
+      return result.response.text();
+    } catch (err) {
+      console.log(`Gemini model ${modelName} failed:`, err.message);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All Gemini models failed');
 }
 
 async function generateWithOpenAI(prompt, maxWords) {
