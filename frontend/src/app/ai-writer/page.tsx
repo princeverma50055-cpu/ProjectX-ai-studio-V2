@@ -3,6 +3,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
+const API_URL = 'https://projectx-backend-9g80.onrender.com'
+
 const tools = [
   { id: 'blog_writer', label: '📝 Blog Writer', placeholder: 'Enter blog topic...' },
   { id: 'seo_article', label: '🔍 SEO Article', placeholder: 'Enter SEO topic...' },
@@ -45,8 +47,7 @@ function AIWriterContent() {
     setOutput('')
 
     try {
-      // FIX: Yahan pura URL use karein taaki request backend server par jaye
-      const res = await fetch('https://project-x-ai-studio-v2.vercel.app/api/ai/generate', {
+      let res = await fetch(`${API_URL}/api/ai/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -55,14 +56,28 @@ function AIWriterContent() {
         })
       })
 
+      let contentType = res.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        // Backend cold-starting on Render free tier, wait & retry once
+        await new Promise(resolve => setTimeout(resolve, 5000))
+        res = await fetch(`${API_URL}/api/ai/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toolType: selectedTool.id,
+            input: input.trim()
+          })
+        })
+      }
+
       const data = await res.json()
-      
+
       if (!res.ok) {
         throw new Error(data?.message || 'Request failed')
       }
 
       const finalOutput = data.result || data.text || data.message || data.content || JSON.stringify(data)
-      
+
       setOutput(finalOutput)
       setRemaining(data.remainingGenerations ?? null)
       toast.success('Generated successfully!')
