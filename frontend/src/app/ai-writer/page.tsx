@@ -3,7 +3,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-const API_URL = 'https://projectx-backend-9g80.onrender.com'
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://projectx-backend-9g80.onrender.com'
 
 const tools = [
   { id: 'blog_writer', label: '📝 Blog Writer', placeholder: 'Enter blog topic...' },
