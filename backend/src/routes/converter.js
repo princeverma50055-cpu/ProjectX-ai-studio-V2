@@ -3,6 +3,7 @@ const multer = require("multer");
 const sharp = require("sharp");
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 const mammoth = require("mammoth");
+const pdfParse = require("pdf-parse");
 
 const router = express.Router();
 
@@ -119,12 +120,24 @@ router.post("/image-to-pdf", upload.array("files"), async (req, res) => {
   }
 });
 
-// PDF → TXT (Placeholder)
+// PDF → TXT
 router.post("/pdf-to-text", upload.single("file"), async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: "PDF to Text converter will be added in next update."
-  });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const pdfData = await pdfParse(req.file.buffer);
+
+    res.json({
+      success: true,
+      text: pdfData.text,
+      filename: req.file.originalname,
+      pages: pdfData.numpages
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;
