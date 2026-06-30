@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, Download, FileType, ArrowRight, X, CheckCircle } from 'lucide-react'
+import { Upload, Download, FileType, ArrowRight, X, CheckCircle, Copy } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const conversions = [
@@ -21,12 +21,14 @@ export default function FileConverterPage() {
   const [files, setFiles] = useState<File[]>([])
   const [converting, setConverting] = useState(false)
   const [done, setDone] = useState(false)
+  const [extractedText, setExtractedText] = useState<string | null>(null)
   const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if ((selectedConversion as any).multiple) { setFiles(acceptedFiles); setFile(null) }
     else { setFile(acceptedFiles[0]); setFiles([]) }
     setDone(false)
+    setExtractedText(null)
   }, [selectedConversion])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -39,6 +41,7 @@ export default function FileConverterPage() {
     if (filesToSend.length === 0) return toast.error('Please upload a file first')
 
     setConverting(true)
+    setExtractedText(null)
     try {
       const formData = new FormData()
       if ((selectedConversion as any).multiple) filesToSend.forEach((f: File) => formData.append('files', f))
@@ -53,8 +56,14 @@ export default function FileConverterPage() {
       const contentType = res.headers.get('content-type')
       if (contentType?.includes('application/json')) {
         const data = await res.json()
-        toast.success(data.message || 'Done!')
-        setDone(true)
+        if (data.text) {
+          setExtractedText(data.text)
+          setDone(true)
+          toast.success('Text extracted successfully!')
+        } else {
+          toast.success(data.message || 'Done!')
+          setDone(true)
+        }
         return
       }
 
@@ -73,6 +82,23 @@ export default function FileConverterPage() {
     } finally {
       setConverting(false)
     }
+  }
+
+  function downloadExtractedText() {
+    if (!extractedText) return
+    const blob = new Blob([extractedText], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'extracted_text.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function copyExtractedText() {
+    if (!extractedText) return
+    navigator.clipboard.writeText(extractedText)
+    toast.success('Copied to clipboard!')
   }
 
   return (
@@ -94,7 +120,7 @@ export default function FileConverterPage() {
             {conversions.map((conv) => (
               <button
                 key={`${conv.from}-${conv.to}`}
-                onClick={() => { setSelectedConversion(conv); setFile(null); setFiles([]); setDone(false) }}
+                onClick={() => { setSelectedConversion(conv); setFile(null); setFiles([]); setDone(false); setExtractedText(null) }}
                 className={`w-full text-left px-4 py-3.5 transition-all border-l-2 ${
                   selectedConversion.from === conv.from && selectedConversion.to === conv.to
                     ? 'bg-purple-500/10 border-l-purple-500 text-white'
@@ -138,7 +164,7 @@ export default function FileConverterPage() {
               <div className="glass rounded-xl border border-dark-500/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium text-white/70">Selected File{files.length > 1 ? 's' : ''}</h4>
-                  <button onClick={() => { setFile(null); setFiles([]); setDone(false) }} className="text-white/30 hover:text-white/60">
+                  <button onClick={() => { setFile(null); setFiles([]); setDone(false); setExtractedText(null) }} className="text-white/30 hover:text-white/60">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -149,6 +175,25 @@ export default function FileConverterPage() {
                     <span className="text-xs text-white/30 ml-auto">{(f.size / 1024).toFixed(0)} KB</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {extractedText && (
+              <div className="glass rounded-xl border border-emerald-500/30 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-emerald-400">Extracted Text</h4>
+                  <div className="flex gap-2">
+                    <button onClick={copyExtractedText} className="p-1.5 text-white/40 hover:text-cyan-400 transition-colors" title="Copy">
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button onClick={downloadExtractedText} className="p-1.5 text-white/40 hover:text-emerald-400 transition-colors" title="Download as .txt">
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-80 overflow-y-auto text-sm text-white/70 whitespace-pre-wrap leading-relaxed bg-black/20 rounded-lg p-3">
+                  {extractedText}
+                </div>
               </div>
             )}
 
