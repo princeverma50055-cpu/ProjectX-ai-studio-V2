@@ -12,7 +12,10 @@ const navLinks = [
     { label: 'Resume Writer', href: '/ai-writer?tool=resume_writer' },
     { label: 'YouTube Script', href: '/ai-writer?tool=youtube_script' },
   ]},
-  { label: 'File Converter', href: '/file-converter' },
+  { label: 'File Converter', href: '/file-converter', dropdown: [
+    { label: 'File Converter', href: '/file-converter' },
+    { label: 'Text to PDF / DOC', href: '/text-to-doc' },
+  ]},
   { label: 'PDF Tools', href: '/pdf-tools' },
   { label: 'OCR', href: '/ocr' },
   { label: 'Extra Tools', href: '/extra-tools', dropdown: [
@@ -94,9 +97,20 @@ export default function Navbar() {
         <div className="lg:hidden glass border-t border-dark-500/40 mt-3">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             {navLinks.map((link) => (
-              <Link key={link.label} href={link.href} className="block px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
-                {link.label}
-              </Link>
+              <div key={link.label}>
+                <Link href={link.href} className="block px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
+                  {link.label}
+                </Link>
+                {(link as any).dropdown && (
+                  <div className="ml-4 space-y-1">
+                    {(link as any).dropdown.map((item: any) => (
+                      <Link key={item.label} href={item.href} className="block px-4 py-2 text-xs text-white/40 hover:text-white/70 hover:bg-white/5 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
+                        → {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
             <div className="pt-3 border-t border-dark-500/40">
               <Link href="/pricing" className="btn-primary w-full text-center text-sm py-2.5 block" onClick={() => setIsOpen(false)}>
